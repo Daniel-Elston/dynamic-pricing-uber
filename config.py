@@ -2,22 +2,24 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from dataclasses import field
+from pathlib import Path
 from pprint import pformat
 
-import pandas as pd
+from utils import my_globs
+# from dataclasses import field
 
 
 @dataclass
 class DataState:
-    df: pd.DataFrame = None
-    checkpoints: list = field(default_factory=lambda: ['some', 'checkpoint', 'items'])
+    raw_path: Path = Path(my_globs.project_config['raw']+'uber.csv')
+    sdo_path: Path = Path(my_globs.project_config['sdo']+'uber.parquet')
 
     def __post_init__(self):
         post_init_dict = {
-            'df': self.df,
+            'raw_path': self.raw_path,
+            'sdo_path': self.sdo_path,
         }
-        logging.debug(f"Initialized DataState: {pformat(post_init_dict)}")
+        logging.debug(f"Initialized DataState:\n{pformat(post_init_dict)}")
 
     def __repr__(self):
         return pformat(self.__dict__)

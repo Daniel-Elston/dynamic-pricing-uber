@@ -11,12 +11,12 @@ logging:
 ##########################################################################################
 
 # PATHS
-api: data/api
-checkpoints: data/checkpoints
-external: data/external
-interim: data/interim
-processed: data/processed
-raw: data/raw
-sdo: data/sdo
+api: data/api/
+checkpoints: data/checkpoints/
+external: data/external/
+interim: data/interim/
+processed: data/processed/
+raw: data/raw/
+sdo: data/sdo/
 
 ##########################################################################################

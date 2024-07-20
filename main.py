@@ -8,7 +8,6 @@ from config import DataState
 from src.pipelines.data_pipeline import DataPipeline
 from utils.logging_config import setup_logging
 from utils.setup_env import setup_project_env
-# from src.pipelines.test_pipeline import TestPipeline
 
 
 def setup():
@@ -27,7 +26,6 @@ if __name__ == '__main__':
     data_state = DataState()
     try:
         DataPipeline(data_state).main()
-        # TestPipeline(data_state).main()
 
     except Exception as e:
         logging.error(f'Pipeline terminated due to unexpected error: {e}', exc_info=True)

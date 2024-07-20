@@ -1,31 +1,40 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 
-import pandas as pd
-
-import utils.my_globs as my_globs
-from utils.file_handler import FileHandler
+from config import DataState
+from utils.file_access import FileAccess
 
 
 class MakeDataset:
-    def __init__(self):
-        self.fh = FileHandler()
-        self.load_path = Path(my_globs.project_config['path']['raw'])
-        self.save_path = Path(my_globs.project_config['path']['sdo'])
+    def __init__(self, data_state: DataState):
+        self.ds = data_state
+        self.file_access = FileAccess()
+        self.load_path = self.ds.raw_path
+        self.save_path = self.ds.sdo_path
 
     def load_data(self):
-        return pd.read_excel(self.load_path/'data.xlsx')
+        return self.file_access.read_file(self.load_path)
 
-    def rename_cols(self, df):
-        rename_map = {
-            'raw-col-title': 'new-col-title',
-        }
-        return df.rename(columns=rename_map)
+    def base_process(self, df):
+        rename_map = {'Unnamed: 0': 'uid'}
+        df = df.rename(columns=rename_map)
+        return df.drop(columns=['key'])
+
+    def convert_data(self, df):
+        if not self.save_path.exists():
+            df.to_parquet(self.save_path)
+            return df
+        else:
+            df = self.file_access.read_file(self.save_path)
+            return df
 
     def pipeline(self):
-        logging.info('Starting Data Pipeline')
+        logging.debug(
+            'Starting MakeDataset')
         df = self.load_data()
-        df = self.rename_cols(df)
+        df = self.base_process(df)
+        df = self.convert_data(df)
+        logging.debug(
+            'Completed MakeDataset')
         return df
