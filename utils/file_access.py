@@ -7,14 +7,14 @@ import pandas as pd
 
 
 class FileAccess:
-    def __init__(self):
-        pass
-
-    def extract_suffix(self, path: Path):
+    @staticmethod
+    def extract_suffix(path: Path):
         return path.suffix
 
-    def read_file(self, path: Path):
-        suffix = self.extract_suffix(path)
+    @staticmethod
+    def read_file(path: Path):
+        path = Path(path)
+        suffix = FileAccess.extract_suffix(path)
         logging.debug(f'Reading file: {path}')
         if suffix == '.parquet':
             return pd.read_parquet(path)
@@ -24,6 +24,22 @@ class FileAccess:
             return pd.read_excel(path)
         elif suffix == '.json':
             return pd.read_json(path)
+        else:
+            raise ValueError(f'Unknown file type: {suffix}')
+
+    @staticmethod
+    def save_file(df: pd.DataFrame, path: Path):
+        path = Path(path)
+        suffix = FileAccess.extract_suffix(path)
+        logging.debug(f'Saving file: {path}')
+        if suffix == '.parquet':
+            return df.to_parquet(path, index=False)
+        elif suffix == '.csv':
+            return df.to_csv(path, index=False)
+        elif suffix == '.xlsx':
+            return df.to_excel(path, index=False)
+        elif suffix == '.json':
+            return df.to_json(path)
         else:
             raise ValueError(f'Unknown file type: {suffix}')
 
