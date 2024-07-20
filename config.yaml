@@ -1,0 +1,22 @@
+# my_config.yaml
+
+
+##########################################################################################
+
+# LOGGING
+logging:
+  root_level: DEBUG
+  file_level: DEBUG
+  console_level: DEBUG
+##########################################################################################
+
+# PATHS
+api: data/api
+checkpoints: data/checkpoints
+external: data/external
+interim: data/interim
+processed: data/processed
+raw: data/raw
+sdo: data/sdo
+
+##########################################################################################
