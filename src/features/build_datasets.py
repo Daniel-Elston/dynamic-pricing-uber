@@ -47,7 +47,7 @@ class BuildMovingAverages:
             df = FileAccess.load_file(load_path)
             df_price_sma, df_count_sma = self.generate_sma_dataset(df)
             for df, file_name in zip([df_price_sma, df_count_sma], ['price_sma', 'count_sma']):
-                FileAccess.save_file(df, f'{save_path}{file_name}.parquet', self.ds.overwrite)
+                FileAccess.save_file(df, f'{save_path}/{file_name}.parquet', self.ds.overwrite)
 
         except Exception as e:
             logging.exception(f'Error: {e}', exc_info=e)
@@ -99,7 +99,7 @@ class BuildBounds:
             df_store = [max_price_hour, min_price_hour, max_count_hour, min_count_hour]
             file_names = ['max_price_hour', 'min_price_hour', 'max_count_hour', 'min_count_hour']
             for df, file_name in zip(df_store, file_names):
-                FileAccess.save_file(df, f'{save_path}{file_name}.parquet', self.ds.overwrite)
+                FileAccess.save_file(df, f'{save_path}/{file_name}.parquet', self.ds.overwrite)
 
         except Exception as e:
             logging.exception(f'Error: {e}', exc_info=True)

@@ -26,6 +26,15 @@ class DataState:
         }
         logging.debug(f"Initialized DataState:\n{pformat(post_init_dict)}")
 
+    def get_paths(self):
+        return {
+            'raw': self.raw_path,
+            'sdo': self.sdo_path,
+            'initial_process': self.initial_process_path,
+            'features': self.features_path,
+            'interim_data': self.interim_data_path
+        }
+
     def __repr__(self):
         return pformat(self.__dict__)
 

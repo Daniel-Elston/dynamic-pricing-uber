@@ -33,12 +33,13 @@ class DataPipeline:
 
     def main(self):
         logging.info('Starting Data Pipeline')
+        pth = self.ds.get_paths()
         try:
-            self.run_make_dataset(self.ds.raw_path, self.ds.sdo_path)
-            self.run_initial_processor(self.ds.sdo_path, self.ds.initial_process_path)
-            self.run_build_features(self.ds.initial_process_path, self.ds.features_path)
-            self.run_build_moving_averages(self.ds.features_path, self.ds.interim_data_path)
-            self.run_build_bounds(self.ds.features_path, self.ds.interim_data_path)
+            self.run_make_dataset(pth['raw'], pth['sdo'])
+            self.run_initial_processor(pth['sdo'], pth['initial_process'])
+            self.run_build_features(pth['initial_process'], pth['features'])
+            self.run_build_moving_averages(pth['features'], pth['interim_data'])
+            self.run_build_bounds(pth['features'], pth['interim_data'])
 
         except Exception as e:
             logging.exception(f'Error: {e}', exc_info=e)
