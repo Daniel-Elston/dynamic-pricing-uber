@@ -15,6 +15,7 @@ class DataState:
     sdo_path: Path = Path(my_globs.project_config['sdo']+'uber.parquet')
     initial_process_path: Path = Path(my_globs.project_config['sdo']+'initial_process.parquet')
     features_path: Path = Path(my_globs.project_config['sdo']+'features.parquet')
+    interim_data_path: Path = Path(my_globs.project_config['interim'])
     overwrite: bool = True
 
     def __post_init__(self):

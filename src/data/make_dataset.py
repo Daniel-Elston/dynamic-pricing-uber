@@ -9,8 +9,6 @@ from utils.file_access import FileAccess
 class MakeDataset:
     def __init__(self, data_state: DataState):
         self.ds = data_state
-        self.load_path = self.ds.raw_path
-        self.save_path = self.ds.sdo_path
 
     def base_process(self, df):
         rename_map = {
@@ -21,13 +19,13 @@ class MakeDataset:
         df = df.rename(columns=rename_map)
         return df.drop(columns=['key'])
 
-    def pipeline(self):
+    def pipeline(self, load_path, save_path):
         logging.debug('Starting MakeDataset')
 
         try:
-            df = FileAccess.load_file(self.load_path)
+            df = FileAccess.load_file(load_path)
             df = self.base_process(df)
-            FileAccess.save_file(df, self.save_path, self.ds.overwrite)
+            FileAccess.save_file(df, save_path, self.ds.overwrite)
         except Exception as e:
             logging.exception(f'Error: {e}', exc_info=e)
             return None

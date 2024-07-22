@@ -11,8 +11,6 @@ from utils.file_access import FileAccess
 class InitialProcessor:
     def __init__(self, data_state: DataState):
         self.ds = data_state
-        self.load_path = self.ds.sdo_path
-        self.save_path = self.ds.initial_process_path
 
     def retrieve_extremes(self, df, col, low_q, high_q, extreme=None):
         q1 = df[col].quantile(low_q)
@@ -46,8 +44,8 @@ class InitialProcessor:
     def sort_by_dt(self, df):
         return df.sort_values(by='timestamp')
 
-    def pipeline(self):
-        df = FileAccess.load_file(self.load_path)
+    def pipeline(self, load_path, save_path):
+        df = FileAccess.load_file(load_path)
         logging.debug(
             f'Starting InitialProcessor. Preprocess shape: {df.shape}')
 
@@ -62,7 +60,7 @@ class InitialProcessor:
             df = self.handle_timezone(df)
             df = self.sort_by_dt(df)
             df = df.drop_duplicates()
-            FileAccess.save_file(df, self.save_path, self.ds.overwrite)
+            FileAccess.save_file(df, save_path, self.ds.overwrite)
         except Exception as e:
             logging.exception(f'Error: {e}', exc_info=e)
             raise
@@ -72,11 +70,9 @@ class InitialProcessor:
         return df
 
 
-class FurtherProcessor:
-    def __init__(self, data_state: DataState):
-        self.ds = data_state
-        self.file_access = FileAccess()
-        self.load_path = self.ds.sdo_path
+# class FurtherProcessor:
+#     def __init__(self, data_state: DataState):
+#         self.ds = data_state
 
-    def load_data(self):
-        return self.file_access.read_file(self.load_path)
+#     def load_data(self):
+#         return self.file_access.read_file(load_path)

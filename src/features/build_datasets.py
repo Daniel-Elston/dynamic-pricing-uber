@@ -1,21 +1,17 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 
 from config import DataConfig
 from config import DataState
 from src.visuals.visualize import Visualiser
 from utils.file_access import FileAccess
-from utils.my_globs import project_config
 
 
 class BuildMovingAverages:
     def __init__(self, data_state: DataState, data_config: DataConfig):
         self.ds = data_state
         self.dc = data_config
-        self.load_path = self.ds.features_path
-        self.save_path = Path(project_config['interim'])
 
     def resample_mean(self, df, period='h'):
         df = df.set_index('timestamp')
@@ -43,15 +39,15 @@ class BuildMovingAverages:
         Visualiser(self.ds, self.dc).generate_sma_plots(df_count_sma, 'count')
         return df_price_sma, df_count_sma
 
-    def pipeline(self):
+    def pipeline(self, load_path, save_path):
         logging.debug(
             'Starting Feature Building Pipeline')
 
         try:
-            df = FileAccess.load_file(self.load_path)
+            df = FileAccess.load_file(load_path)
             df_price_sma, df_count_sma = self.generate_sma_dataset(df)
             for df, file_name in zip([df_price_sma, df_count_sma], ['price_sma', 'count_sma']):
-                FileAccess.save_file(df, f'{self.save_path}{file_name}.parquet', self.ds.overwrite)
+                FileAccess.save_file(df, f'{save_path}{file_name}.parquet', self.ds.overwrite)
 
         except Exception as e:
             logging.exception(f'Error: {e}', exc_info=e)
@@ -64,8 +60,6 @@ class BuildBounds:
     def __init__(self, data_state: DataState, data_config: DataConfig):
         self.ds = data_state
         self.dc = data_config
-        self.load_path = self.ds.features_path
-        self.save_path = Path(project_config['interim'])
 
     def resample_mean(self, df, period='h'):
         df = df.set_index('timestamp')
@@ -94,18 +88,18 @@ class BuildBounds:
         max_count_hour, min_count_hour = self.generate_group_stats(df_resample_sum, 'count', ['date', 'hour'])
         return max_price_hour, min_price_hour, max_count_hour, min_count_hour
 
-    def pipeline(self):
+    def pipeline(self, load_path, save_path):
         logging.debug(
             'Starting Feature Building Pipeline')
 
         try:
-            df = FileAccess.load_file(self.load_path)
+            df = FileAccess.load_file(load_path)
 
             max_price_hour, min_price_hour, max_count_hour, min_count_hour = self.generate_bounds_dataset(df)
             df_store = [max_price_hour, min_price_hour, max_count_hour, min_count_hour]
             file_names = ['max_price_hour', 'min_price_hour', 'max_count_hour', 'min_count_hour']
             for df, file_name in zip(df_store, file_names):
-                FileAccess.save_file(df, f'{self.save_path}{file_name}.parquet', self.ds.overwrite)
+                FileAccess.save_file(df, f'{save_path}{file_name}.parquet', self.ds.overwrite)
 
         except Exception as e:
             logging.exception(f'Error: {e}', exc_info=True)
