@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 
 import utils.my_globs as my_globs
+from config import DataConfig
 from config import DataState
 from src.pipelines.data_pipeline import DataPipeline
 from utils.logging_config import setup_logging
@@ -24,8 +25,9 @@ if __name__ == '__main__':
     setup()
 
     data_state = DataState()
+    data_config = DataConfig()
     try:
-        DataPipeline(data_state).main()
+        DataPipeline(data_state, data_config).main()
 
     except Exception as e:
         logging.error(f'Pipeline terminated due to unexpected error: {e}', exc_info=True)

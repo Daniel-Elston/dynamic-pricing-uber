@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import logging
 
+import pandas as pd
+
 from config import DataState
 from utils.file_access import FileAccess
 
@@ -9,7 +11,6 @@ from utils.file_access import FileAccess
 class InitialProcessor:
     def __init__(self, data_state: DataState):
         self.ds = data_state
-        self.file_access = FileAccess()
         self.load_path = self.ds.sdo_path
         self.save_path = self.ds.initial_process_path
 
@@ -32,21 +33,42 @@ class InitialProcessor:
         df = df[~df['uid'].isin(df_extremes['uid'])]
         return df
 
+    def convert_dt(self, df):
+        df['timestamp'] = pd.to_datetime(df['timestamp'])
+        return df
+
+    def handle_timezone(self, df):
+        df['time_zone'] = df['timestamp'].dt.tz
+        df['time_zone'] = df['time_zone'].astype(str)
+        df['timestamp'] = df['timestamp'].dt.tz_convert(None)
+        return df
+
+    def sort_by_dt(self, df):
+        return df.sort_values(by='timestamp')
+
     def pipeline(self):
-        df = self.file_access.read_file(self.load_path)
+        df = FileAccess.load_file(self.load_path)
         logging.debug(
             f'Starting InitialProcessor. Preprocess shape: {df.shape}')
 
-        df_ex1 = self.retrieve_extremes(df, 'passenger_count', .1, .9, 'High')
-        df_ex2 = self.retrieve_extremes(df, 'fare_amount', .25, .75, 'Low')
-        for df_ex in [df_ex1, df_ex2]:
-            df = self.remove_extremes(df, df_ex)
-        df = df.dropna()
-        df = df.drop_duplicates()
-        self.file_access.save_file(df, self.save_path)
+        try:
+            df_ex1 = self.retrieve_extremes(df, 'count', .1, .9, 'High')
+            df_ex2 = self.retrieve_extremes(df, 'price', .25, .75, 'Low')
+            for df_ex in [df_ex1, df_ex2]:
+                df = self.remove_extremes(df, df_ex)
+            df = df.dropna()
+
+            df = self.convert_dt(df)
+            df = self.handle_timezone(df)
+            df = self.sort_by_dt(df)
+            df = df.drop_duplicates()
+            FileAccess.save_file(df, self.save_path, self.ds.overwrite)
+        except Exception as e:
+            logging.exception(f'Error: {e}', exc_info=e)
+            raise
 
         logging.debug(
-            f'Completed InitialProcessor. Preprocess shape: {df.shape}')
+            f'Completed InitialProcessor. PostProcess shape: {df.shape}')
         return df
 
 

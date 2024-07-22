@@ -7,7 +7,7 @@ from config import DataState
 from utils.file_access import FileAccess
 
 
-class ExplorationVisuals:
+class InitialExploration:
     def __init__(self, data_state: DataState):
         self.ds = data_state
         self.load_path = self.ds.sdo_path
@@ -27,7 +27,7 @@ class ExplorationVisuals:
             'Starting MakeDataset')
 
         df = FileAccess.load_file(self.load_path)
-        # self.generate_metadata(df)
+        self.generate_metadata(df)
 
         logging.debug(
             'Completed MakeDataset')

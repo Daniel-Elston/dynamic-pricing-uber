@@ -12,10 +12,10 @@ class FileAccess:
         return path.suffix
 
     @staticmethod
-    def read_file(path: Path):
+    def load_file(path: Path):
         path = Path(path)
         suffix = FileAccess.extract_suffix(path)
-        logging.debug(f'Reading file: {path}')
+        logging.debug(f'Reading file: ``{path}``')
         if suffix == '.parquet':
             return pd.read_parquet(path)
         elif suffix == '.csv':
@@ -28,10 +28,8 @@ class FileAccess:
             raise ValueError(f'Unknown file type: {suffix}')
 
     @staticmethod
-    def save_file(df: pd.DataFrame, path: Path):
-        path = Path(path)
+    def save_helper(df: pd.DataFrame, path: Path):
         suffix = FileAccess.extract_suffix(path)
-        logging.debug(f'Saving file: {path}')
         if suffix == '.parquet':
             return df.to_parquet(path, index=False)
         elif suffix == '.csv':
@@ -42,6 +40,15 @@ class FileAccess:
             return df.to_json(path)
         else:
             raise ValueError(f'Unknown file type: {suffix}')
+
+    @staticmethod
+    def save_file(df: pd.DataFrame, path: Path, overwrite=False):
+        path = Path(path)
+        if overwrite is False and path.exists():
+            logging.warning(f'File already exists: ``{path}``')
+        else:
+            logging.debug(f'Saving file: ``{path}``')
+            FileAccess.save_helper(df, path)
 
 
 if __name__ == "__main__":
