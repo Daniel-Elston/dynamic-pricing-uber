@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 from pathlib import Path
 
@@ -49,6 +50,24 @@ class FileAccess:
         else:
             logging.debug(f'Saving file: ``{path}``')
             FileAccess.save_helper(df, path)
+
+    @staticmethod
+    def save_json(data, path, overwrite=False):
+        if overwrite is False and Path(path).exists():
+            logging.warning(f'File already exists: ``{path}``')
+        else:
+            logging.debug(f'Saving json to ``{path}``')
+            with open(path, 'w') as file:
+                json.dump(data, file)
+
+    @staticmethod
+    def load_json(path):
+        with open(path, 'r') as file:
+            return json.load(file)
+
+    @staticmethod
+    def form_path(dir_path, filename):
+        return Path.joinpath(dir_path, filename)
 
 
 if __name__ == "__main__":

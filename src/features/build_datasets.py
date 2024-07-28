@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import logging
 
-from config import DataConfig
-from config import DataState
+from config.data import DataConfig
+from config.data import DataState
 from src.visuals.visualize import Visualiser
 from utils.file_access import FileAccess
 
@@ -47,7 +47,7 @@ class BuildMovingAverages:
             df = FileAccess.load_file(load_path)
             df_price_sma, df_count_sma = self.generate_sma_dataset(df)
             for df, file_name in zip([df_price_sma, df_count_sma], ['price_sma', 'count_sma']):
-                FileAccess.save_file(df, f'{save_path}/{file_name}.parquet', self.ds.overwrite)
+                FileAccess.save_file(df, f'{save_path}/{file_name}.parquet', self.dc.overwrite)
 
         except Exception as e:
             logging.exception(f'Error: {e}', exc_info=e)
@@ -88,18 +88,23 @@ class BuildBounds:
         max_count_hour, min_count_hour = self.generate_group_stats(df_resample_sum, 'count', ['date', 'hour'])
         return max_price_hour, min_price_hour, max_count_hour, min_count_hour
 
-    def pipeline(self, load_path, save_path):
+    def pipeline(self, load_path, save_path, result_path):
         logging.debug(
             'Starting Feature Building Pipeline')
 
         try:
             df = FileAccess.load_file(load_path)
-
             max_price_hour, min_price_hour, max_count_hour, min_count_hour = self.generate_bounds_dataset(df)
             df_store = [max_price_hour, min_price_hour, max_count_hour, min_count_hour]
             file_names = ['max_price_hour', 'min_price_hour', 'max_count_hour', 'min_count_hour']
-            for df, file_name in zip(df_store, file_names):
-                FileAccess.save_file(df, f'{save_path}/{file_name}.parquet', self.ds.overwrite)
+
+            bound_hour_store = {}
+            for df, filename in zip(df_store, file_names):
+                FileAccess.save_file(df, f'{save_path}/{filename}.parquet', self.dc.overwrite)
+
+                top_hours = df['hour'].value_counts().nlargest(12).index.tolist()
+                bound_hour_store[filename] = list(top_hours)
+            FileAccess.save_json(bound_hour_store, result_path, overwrite=self.dc.overwrite)
 
         except Exception as e:
             logging.exception(f'Error: {e}', exc_info=True)

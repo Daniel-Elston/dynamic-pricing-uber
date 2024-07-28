@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import logging
 
-from config import DataState
+from config.data import DataConfig
 from utils.file_access import FileAccess
 
 
 class MakeDataset:
-    def __init__(self, data_state: DataState):
-        self.ds = data_state
+    """Load dataset and perform base processing"""
+
+    def __init__(self, data_config: DataConfig):
+        self.dc = data_config
 
     def base_process(self, df):
         rename_map = {
@@ -25,7 +27,7 @@ class MakeDataset:
         try:
             df = FileAccess.load_file(load_path)
             df = self.base_process(df)
-            FileAccess.save_file(df, save_path, self.ds.overwrite)
+            FileAccess.save_file(df, save_path, self.dc.overwrite)
         except Exception as e:
             logging.exception(f'Error: {e}', exc_info=e)
             return None

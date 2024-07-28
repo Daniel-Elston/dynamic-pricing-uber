@@ -13,7 +13,7 @@ import requests
 from requests.auth import HTTPDigestAuth
 
 import utils.my_globs as my_globs
-from utils.file_handler import FileHandler
+from utils.view_file import FileHandler
 # from pprint import pprint
 
 

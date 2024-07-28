@@ -4,13 +4,15 @@ import logging
 
 import pandas as pd
 
-from config import DataState
+from config.data import DataConfig
 from utils.file_access import FileAccess
 
 
 class InitialProcessor:
-    def __init__(self, data_state: DataState):
-        self.ds = data_state
+    """Process extreme outliers, datetimes, timezone and sorting"""
+
+    def __init__(self, data_config: DataConfig):
+        self.dc = data_config
 
     def retrieve_extremes(self, df, col, low_q, high_q, extreme=None):
         q1 = df[col].quantile(low_q)
@@ -60,7 +62,7 @@ class InitialProcessor:
             df = self.handle_timezone(df)
             df = self.sort_by_dt(df)
             df = df.drop_duplicates()
-            FileAccess.save_file(df, save_path, self.ds.overwrite)
+            FileAccess.save_file(df, save_path, self.dc.overwrite)
         except Exception as e:
             logging.exception(f'Error: {e}', exc_info=e)
             raise
@@ -68,11 +70,3 @@ class InitialProcessor:
         logging.debug(
             f'Completed InitialProcessor. PostProcess shape: {df.shape}')
         return df
-
-
-# class FurtherProcessor:
-#     def __init__(self, data_state: DataState):
-#         self.ds = data_state
-
-#     def load_data(self):
-#         return self.file_access.read_file(load_path)

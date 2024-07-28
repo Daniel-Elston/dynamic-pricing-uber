@@ -9,7 +9,7 @@ import yaml
 from utils.logging_config import setup_logging
 
 
-def setup_project_env(config_filename='config.yaml', env_filename='.env', log_file_name=None):
+def setup_project_env(config_filename='config/config.yaml', env_filename='.env', log_file_name=None):
     """Set up the project environment and load configuration."""
 
     # Set up the environment

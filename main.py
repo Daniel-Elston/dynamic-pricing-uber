@@ -4,8 +4,8 @@ import logging
 from pathlib import Path
 
 import utils.my_globs as my_globs
-from config import DataConfig
-from config import DataState
+from config.data import DataConfig
+from config.data import DataState
 from src.pipelines.data_pipeline import DataPipeline
 from utils.logging_config import setup_logging
 from utils.setup_env import setup_project_env

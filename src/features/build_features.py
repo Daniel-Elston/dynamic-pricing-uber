@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import logging
 
-from config import DataConfig
-from config import DataState
+from config.data import DataConfig
+from config.data import DataState
 from utils.file_access import FileAccess
 
 
 class BuildFeatures:
+    """Build/compose simple datetime features"""
+
     def __init__(self, data_state: DataState, data_config: DataConfig):
         self.ds = data_state
         self.dc = data_config
@@ -28,7 +30,7 @@ class BuildFeatures:
         try:
             df = FileAccess.load_file(load_path)
             df = self.build_dt_features(df)
-            FileAccess.save_file(df, save_path, self.ds.overwrite)
+            FileAccess.save_file(df, save_path, self.dc.overwrite)
 
         except Exception as e:
             logging.exception(f'Error: {e}', exc_info=True)

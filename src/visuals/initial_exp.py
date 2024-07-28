@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from config import DataState
+from config.data import DataState
 from utils.file_access import FileAccess
 
 
