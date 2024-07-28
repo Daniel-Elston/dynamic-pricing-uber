@@ -13,7 +13,9 @@ class DataState:
     raw_path: Path = Path('data/raw/uber.csv')
     sdo_path: Path = Path('data/sdo/uber.parquet')
     initial_process_path: Path = Path('data/sdo/initial_process.parquet')
-    features_path: Path = Path('data/sdo/features.parquet')
+    initial_features_path: Path = Path('data/sdo/initial_features.parquet')
+    bound_features_path: Path = Path('data/sdo/bound_features.parquet')
+
     interim_data_path: Path = Path('data/interim/')
 
     result_path: Path = Path('reports/results/bound_hours.json')
@@ -23,7 +25,8 @@ class DataState:
             'raw': self.raw_path,
             'sdo': self.sdo_path,
             'process1': self.initial_process_path,
-            'features': self.features_path,
+            'features1': self.initial_features_path,
+            'features2': self.bound_features_path,
             'interim': self.interim_data_path,
 
             'result1': self.result_path
@@ -44,5 +47,4 @@ class DataState:
 class DataConfig:
     overwrite: bool = True
     save_fig: bool = True
-    # sma_windows: list = field(default_factory=lambda: ['30T', '1H', '2H', '4H'])
     sma_windows: list = field(default_factory=lambda: [1, 2, 4, 6])

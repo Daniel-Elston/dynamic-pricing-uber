@@ -29,8 +29,8 @@ class DataPipeline:
     def run_build_moving_averages(self, load_path, save_path):
         return BuildMovingAverages(self.ds, self.dc).pipeline(load_path, save_path)
 
-    def run_build_bounds(self, load_path, save_path, result_path):
-        return BuildBounds(self.ds, self.dc).pipeline(load_path, save_path, result_path)
+    def run_build_bounds(self, load_path, interim_path, result_path, save_path):
+        return BuildBounds(self.ds, self.dc).pipeline(load_path, interim_path, result_path, save_path)
 
     def run_bound_visuals(self, load_path):
         return BoundVisuals.bound_hours(load_path)
@@ -40,11 +40,11 @@ class DataPipeline:
             'Starting Data Pipeline')
         try:
             pth = self.ds.paths
-            self.run_make_dataset(pth['raw'], pth['sdo'])
-            self.run_initial_processor(pth['sdo'], pth['process1'])
-            self.run_build_features(pth['process1'], pth['features'])
-            self.run_build_moving_averages(pth['features'], pth['interim'])
-            self.run_build_bounds(pth['features'], pth['interim'], pth['result1'])
+            # self.run_make_dataset(pth['raw'], pth['sdo'])
+            # self.run_initial_processor(pth['sdo'], pth['process1'])
+            # self.run_build_features(pth['process1'], pth['features1'])
+            # self.run_build_moving_averages(pth['features1'], pth['interim'])
+            self.run_build_bounds(pth['features1'], pth['interim'], pth['result1'], pth['features2'])
 
             # self.run_bound_visuals(pth['interim'])
 
