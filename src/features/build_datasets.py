@@ -37,9 +37,15 @@ class BuildMovingAverages:
             df_price_sma = self.apply_moving_average(df_sample_mean, column='price', window=hour)
             df_count_sma = self.apply_moving_average(df_sample_sum, column='count', window=hour)
 
-        Visualiser(self.ds, self.dc).generate_sma_plots(df_price_sma, 'price')
-        Visualiser(self.ds, self.dc).generate_sma_plots(df_count_sma, 'count')
+        sample = 24*7*2
+        Visualiser(self.ds, self.dc).generate_sma_plots(df_price_sma[:sample], 'price')
+        Visualiser(self.ds, self.dc).generate_sma_plots(df_count_sma[:sample], 'count')
         return df_price_sma, df_count_sma
+
+    def merge_sma_data(self, df_price_sma, df_count_sma):
+        df = pd.merge(df_price_sma, df_count_sma, how='left', left_index=True, right_index=True, suffixes=('', '_x'))
+        df = df.drop(columns=['price_x', 'count_x'])
+        return df
 
     def pipeline(self, load_path, save_path):
         logging.debug(
@@ -48,8 +54,9 @@ class BuildMovingAverages:
         try:
             df = FileAccess.load_file(load_path)
             df_price_sma, df_count_sma = self.generate_sma_dataset(df)
-            for df, file_name in zip([df_price_sma, df_count_sma], ['price_sma', 'count_sma']):
-                FileAccess.save_file(df, f'{save_path}/{file_name}.parquet', self.dc.overwrite)
+            df = self.merge_sma_data(df_price_sma, df_count_sma)
+            df = df.reset_index()
+            FileAccess.save_file(df, f'{save_path}/sma.parquet', self.dc.overwrite)
 
         except Exception as e:
             logging.exception(f'Error: {e}', exc_info=e)
@@ -89,24 +96,18 @@ class BuildBounds:
         max_price_hour, min_price_hour = self.generate_group_stats(df_resample_sum, 'price', ['date', 'hour'])
         max_count_hour, min_count_hour = self.generate_group_stats(df_resample_sum, 'count', ['date', 'hour'])
 
+        max_price_hour = max_price_hour.rename(columns={'price': 'price_max', 'hour': 'max_price_hour'})
+        min_price_hour = min_price_hour.rename(columns={'price': 'price_min', 'hour': 'min_price_hour'})
+        max_count_hour = max_count_hour.rename(columns={'count': 'count_max', 'hour': 'max_count_hour'})
+        min_count_hour = min_count_hour.rename(columns={'count': 'count_min', 'hour': 'min_count_hour'})
+
         return max_price_hour, min_price_hour, max_count_hour, min_count_hour
 
-    def amend_bound_results(self, df, bound_hour_store, max_min, metric):
-        bound_hour_store['date'] = pd.to_datetime(bound_hour_store['date'])
-        merged_df = pd.merge(bound_hour_store, df, how='left', left_on='date', right_on='date', suffixes=(f'_{max_min}_{metric}', ''))
-        # merged_df.drop(columns=['date'], inplace=True)
-
-        if metric == 'price':
-            merged_df = merged_df.rename(columns={f'price_{max_min}_price': f'{max_min}_price'})
-        if metric == 'count':
-            merged_df = merged_df.rename(columns={f'count_{max_min}_count': f'{max_min}_count'})
-        return merged_df
-
-    def run_amending(self, df, df_store):
-        df = self.amend_bound_results(df, df_store[0], 'max', 'price')
-        df = self.amend_bound_results(df, df_store[1], 'min', 'price')
-        df = self.amend_bound_results(df, df_store[2], 'max', 'count')
-        df = self.amend_bound_results(df, df_store[3], 'min', 'count')
+    def amend_bound_results(self, df, df_store):
+        df = df[['date']]
+        for frame in df_store:
+            frame['date'] = pd.to_datetime(frame['date'])
+            df = pd.merge(frame, df, how='left', left_on='date', right_on='date')
         return df
 
     def pipeline(self, load_path, interim_path, result_path, save_path):
@@ -123,14 +124,12 @@ class BuildBounds:
             for frame, filename in zip(df_store, file_names):
                 FileAccess.save_file(frame, f'{interim_path}/{filename}.parquet', self.dc.overwrite)
 
-                top_hours = frame['hour'].value_counts().nlargest(12).index.tolist()
+                top_hours = frame[filename].value_counts().nlargest(12).index.tolist()
                 bound_hour_store[filename] = list(top_hours)
             FileAccess.save_json(bound_hour_store, result_path, overwrite=self.dc.overwrite)
 
-            df = self.run_amending(df, df_store)
-            print(frame)
-            df.head(200).to_excel('sample.xlsx')
-            FileAccess.save_file(df, save_path, self.dc.overwrite)
+            df_bounds = self.amend_bound_results(df, df_store)
+            FileAccess.save_file(df_bounds, f'{save_path}/bounds.parquet', self.dc.overwrite)
 
         except Exception as e:
             logging.exception(f'Error: {e}', exc_info=True)

@@ -9,6 +9,7 @@ from src.data.process import InitialProcessor
 from src.features.build_datasets import BuildBounds
 from src.features.build_datasets import BuildMovingAverages
 from src.features.build_features import BuildFeatures
+from src.features.build_ped import BuildPED
 from src.visuals.visualize import BoundVisuals
 
 
@@ -32,6 +33,9 @@ class DataPipeline:
     def run_build_bounds(self, load_path, interim_path, result_path, save_path):
         return BuildBounds(self.ds, self.dc).pipeline(load_path, interim_path, result_path, save_path)
 
+    def run_build_ped(self, load_path, save_path):
+        return BuildPED(self.ds, self.dc).pipeline(load_path, save_path)
+
     def run_bound_visuals(self, load_path):
         return BoundVisuals.bound_hours(load_path)
 
@@ -43,9 +47,9 @@ class DataPipeline:
             # self.run_make_dataset(pth['raw'], pth['sdo'])
             # self.run_initial_processor(pth['sdo'], pth['process1'])
             # self.run_build_features(pth['process1'], pth['features1'])
-            # self.run_build_moving_averages(pth['features1'], pth['interim'])
-            self.run_build_bounds(pth['features1'], pth['interim'], pth['result1'], pth['features2'])
-
+            # self.run_build_moving_averages(pth['features1'], pth['frame_result'])
+            # self.run_build_bounds(pth['features1'], pth['interim'], pth['result1'], pth['frame_result'])
+            self.run_build_ped(pth['frame_result'], pth['result1'])
             # self.run_bound_visuals(pth['interim'])
 
         except Exception as e:

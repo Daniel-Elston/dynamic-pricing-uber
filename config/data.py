@@ -18,6 +18,7 @@ class DataState:
 
     interim_data_path: Path = Path('data/interim/')
 
+    frame_result_path: Path = Path('data/result/')
     result_path: Path = Path('reports/results/bound_hours.json')
 
     def get_paths(self):
@@ -29,6 +30,7 @@ class DataState:
             'features2': self.bound_features_path,
             'interim': self.interim_data_path,
 
+            'frame_result': self.frame_result_path,
             'result1': self.result_path
         }
 
@@ -47,4 +49,5 @@ class DataState:
 class DataConfig:
     overwrite: bool = True
     save_fig: bool = True
+    window_select: int = 4
     sma_windows: list = field(default_factory=lambda: [1, 2, 4, 6])
