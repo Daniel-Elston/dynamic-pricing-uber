@@ -5,6 +5,7 @@ from pathlib import Path
 
 import utils.my_globs as my_globs
 from config.data import DataConfig
+from config.data import DataPaths
 from config.data import DataState
 from src.pipelines.data_pipeline import DataPipeline
 from utils.logging_config import setup_logging
@@ -24,10 +25,11 @@ def setup():
 if __name__ == '__main__':
     setup()
 
-    data_state = DataState()
-    data_config = DataConfig()
+    dc = DataConfig()
+    dp = DataPaths()
+    ds = DataState(dp, dc)
     try:
-        DataPipeline(data_state, data_config).main()
+        DataPipeline(ds, dc).main()
 
     except Exception as e:
         logging.error(f'Pipeline terminated due to unexpected error: {e}', exc_info=True)

@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-import logging
+import pandas as pd
 
 from config.data import DataConfig
 from config.data import DataState
-from utils.file_access import FileAccess
 
 
 class BuildFeatures:
@@ -25,17 +24,6 @@ class BuildFeatures:
 
         return df
 
-    def pipeline(self, load_path, save_path):
-        logging.debug(
-            'Starting Feature Building Pipeline')
-
-        try:
-            df = FileAccess.load_file(load_path)
-            df = self.build_dt_features(df)
-            FileAccess.save_file(df, save_path, self.dc.overwrite)
-
-        except Exception as e:
-            logging.exception(f'Error: {e}', exc_info=True)
-            raise
-        logging.debug(
-            'Completed Feature Building Pipeline')
+    def pipeline(self, df: pd.DataFrame) -> pd.DataFrame:
+        df = self.build_dt_features(df)
+        return df

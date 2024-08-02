@@ -5,7 +5,6 @@ import logging
 import pandas as pd
 
 from config.data import DataConfig
-from utils.file_access import FileAccess
 
 
 class InitialProcessor:
@@ -46,27 +45,19 @@ class InitialProcessor:
     def sort_by_dt(self, df):
         return df.sort_values(by='timestamp')
 
-    def pipeline(self, load_path, save_path):
-        df = FileAccess.load_file(load_path)
-        logging.debug(
-            f'Starting InitialProcessor. Preprocess shape: {df.shape}')
+    def pipeline(self, df: pd.DataFrame) -> pd.DataFrame:
+        logging.debug(f'Preprocess shape: {df.shape}')
 
-        try:
-            df_ex1 = self.retrieve_extremes(df, 'count', .1, .9, 'High')
-            df_ex2 = self.retrieve_extremes(df, 'price', .25, .75, 'Low')
-            for df_ex in [df_ex1, df_ex2]:
-                df = self.remove_extremes(df, df_ex)
-            df = df.dropna()
+        df_ex1 = self.retrieve_extremes(df, 'count', .1, .9, 'High')
+        df_ex2 = self.retrieve_extremes(df, 'price', .25, .75, 'Low')
+        for df_ex in [df_ex1, df_ex2]:
+            df = self.remove_extremes(df, df_ex)
+        df = df.dropna()
 
-            df = self.convert_dt(df)
-            df = self.handle_timezone(df)
-            df = self.sort_by_dt(df)
-            df = df.drop_duplicates()
-            FileAccess.save_file(df, save_path, self.dc.overwrite)
-        except Exception as e:
-            logging.exception(f'Error: {e}', exc_info=e)
-            raise
+        df = self.convert_dt(df)
+        df = self.handle_timezone(df)
+        df = self.sort_by_dt(df)
+        df = df.drop_duplicates()
 
-        logging.debug(
-            f'Completed InitialProcessor. PostProcess shape: {df.shape}')
+        logging.debug(f'PostProcess shape: {df.shape}')
         return df

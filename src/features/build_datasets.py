@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import logging
+from typing import List
 
 import pandas as pd
 
 from config.data import DataConfig
 from config.data import DataState
-from src.visuals.visualize import Visualiser
 from utils.file_access import FileAccess
 
 
@@ -37,9 +36,9 @@ class BuildMovingAverages:
             df_price_sma = self.apply_moving_average(df_sample_mean, column='price', window=hour)
             df_count_sma = self.apply_moving_average(df_sample_sum, column='count', window=hour)
 
-        sample = 24*7*2
-        Visualiser(self.ds, self.dc).generate_sma_plots(df_price_sma[:sample], 'price')
-        Visualiser(self.ds, self.dc).generate_sma_plots(df_count_sma[:sample], 'count')
+        # sample = 24*7*2
+        # Visualiser(self.ds, self.dc).generate_sma_plots(df_price_sma[:sample], 'price')
+        # Visualiser(self.ds, self.dc).generate_sma_plots(df_count_sma[:sample], 'count')
         return df_price_sma, df_count_sma
 
     def merge_sma_data(self, df_price_sma, df_count_sma):
@@ -47,22 +46,11 @@ class BuildMovingAverages:
         df = df.drop(columns=['price_x', 'count_x'])
         return df
 
-    def pipeline(self, load_path, save_path):
-        logging.debug(
-            'Starting Feature Building Pipeline')
-
-        try:
-            df = FileAccess.load_file(load_path)
-            df_price_sma, df_count_sma = self.generate_sma_dataset(df)
-            df = self.merge_sma_data(df_price_sma, df_count_sma)
-            df = df.reset_index()
-            FileAccess.save_file(df, f'{save_path}/sma.parquet', self.dc.overwrite)
-
-        except Exception as e:
-            logging.exception(f'Error: {e}', exc_info=e)
-            raise
-        logging.debug(
-            'Completed Feature Building Pipeline')
+    def pipeline(self, df: pd.DataFrame) -> pd.DataFrame:
+        df_price_sma, df_count_sma = self.generate_sma_dataset(df)
+        df = self.merge_sma_data(df_price_sma, df_count_sma)
+        df = df.reset_index()
+        return df
 
 
 class BuildBounds:
@@ -110,29 +98,21 @@ class BuildBounds:
             df = pd.merge(frame, df, how='left', left_on='date', right_on='date')
         return df
 
-    def pipeline(self, load_path, interim_path, result_path, save_path):
-        logging.debug(
-            'Starting Feature Building Pipeline')
+    def pipeline(self, df: pd.DataFrame, save_paths: List[str]) -> pd.DataFrame:
+        interim_path, result_path, frames_path = save_paths
 
-        try:
-            df = FileAccess.load_file(load_path)
-            max_price_hour, min_price_hour, max_count_hour, min_count_hour = self.generate_bounds_dataset(df)
-            df_store = [max_price_hour, min_price_hour, max_count_hour, min_count_hour]
-            file_names = ['max_price_hour', 'min_price_hour', 'max_count_hour', 'min_count_hour']
+        max_price_hour, min_price_hour, max_count_hour, min_count_hour = self.generate_bounds_dataset(df)
+        df_store = [max_price_hour, min_price_hour, max_count_hour, min_count_hour]
+        file_names = ['max_price_hour', 'min_price_hour', 'max_count_hour', 'min_count_hour']
 
-            bound_hour_store = {}
-            for frame, filename in zip(df_store, file_names):
-                FileAccess.save_file(frame, f'{interim_path}/{filename}.parquet', self.dc.overwrite)
+        bound_hour_store = {}
+        for frame, filename in zip(df_store, file_names):
+            FileAccess.save_file(frame, f'{interim_path}/{filename}.parquet', self.dc.overwrite)
 
-                top_hours = frame[filename].value_counts().nlargest(12).index.tolist()
-                bound_hour_store[filename] = list(top_hours)
-            FileAccess.save_json(bound_hour_store, result_path, overwrite=self.dc.overwrite)
+            top_hours = frame[filename].value_counts().nlargest(12).index.tolist()
+            bound_hour_store[filename] = list(top_hours)
+        FileAccess.save_json(bound_hour_store, result_path, overwrite=self.dc.overwrite)
 
-            df_bounds = self.amend_bound_results(df, df_store)
-            FileAccess.save_file(df_bounds, f'{save_path}/bounds.parquet', self.dc.overwrite)
-
-        except Exception as e:
-            logging.exception(f'Error: {e}', exc_info=True)
-            raise
-        logging.debug('Completed Feature Building Pipeline')
-        return df
+        df_bounds = self.amend_bound_results(df, df_store)
+        FileAccess.save_file(df_bounds, f'{frames_path}/bounds.parquet', self.dc.overwrite)
+        return df_store, bound_hour_store, df_bounds

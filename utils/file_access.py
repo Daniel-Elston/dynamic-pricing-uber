@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+from contextlib import contextmanager
 from pathlib import Path
 
 import pandas as pd
@@ -13,20 +14,22 @@ class FileAccess:
         return path.suffix
 
     @staticmethod
+    @contextmanager
     def load_file(path: Path):
         path = Path(path)
         suffix = FileAccess.extract_suffix(path)
         logging.debug(f'Reading file: ``{path}``')
         if suffix == '.parquet':
-            return pd.read_parquet(path)
+            df = pd.read_parquet(path)
         elif suffix == '.csv':
-            return pd.read_csv(path)
+            df = pd.read_csv(path)
         elif suffix == '.xlsx':
-            return pd.read_excel(path)
+            df = pd.read_excel(path)
         elif suffix == '.json':
-            return pd.read_json(path)
+            df = pd.read_json(path)
         else:
             raise ValueError(f'Unknown file type: {suffix}')
+        yield df
 
     @staticmethod
     def save_helper(df: pd.DataFrame, path: Path):
@@ -40,9 +43,10 @@ class FileAccess:
         elif suffix == '.json':
             return df.to_json(path)
         else:
-            raise ValueError(f'Unknown file type: {suffix}')
+            raise ValueError(f'Unknown file type: {path} {suffix}')
 
     @staticmethod
+    @contextmanager
     def save_file(df: pd.DataFrame, path: Path, overwrite=False):
         path = Path(path)
         if overwrite is False and path.exists():
@@ -52,6 +56,7 @@ class FileAccess:
             FileAccess.save_helper(df, path)
 
     @staticmethod
+    @contextmanager
     def save_json(data, path, overwrite=False):
         if overwrite is False and Path(path).exists():
             logging.warning(f'File already exists: ``{path}``')
@@ -61,6 +66,7 @@ class FileAccess:
                 json.dump(data, file)
 
     @staticmethod
+    @contextmanager
     def load_json(path):
         with open(path, 'r') as file:
             return json.load(file)
@@ -71,6 +77,6 @@ class FileAccess:
 
 
 if __name__ == "__main__":
-    file_path = Path('path.parquet')
-    df = FileAccess.read_file(file_path)
-    print(df.head())
+    file_path = Path('data/sdo/uber.parquet')
+    df = FileAccess.load_file(file_path)
+    print(df.head(20))
