@@ -26,31 +26,32 @@ class DataPipeline:
         self.ds = data_state
         self.dc = data_config
 
-    def run_step(self, step: Callable, load_path: str, save_paths: Union[str, List[str]]):
+    def run_step(self, step: Callable, load_path: str, save_paths: Union[str, List[str], None] = None):
         load_path = self.ds.paths.get_path(load_path)
-        save_paths = [self.ds.paths.get_path(path) for path in (save_paths if isinstance(save_paths, list) else [save_paths])]
-        try:
-            with FileAccess.load_file(load_path) as df:
-                logged_step = log_step(load_path, save_paths)(step)
-                result = logged_step(df, save_paths[0] if len(save_paths) == 1 else save_paths)
-                if len(save_paths) == 1:
-                    FileAccess.save_file(result, save_paths[0], self.dc.overwrite)
-            return result
-        except Exception as e:
-            logging.error(f"Error in step {step.__name__}: {str(e)}")
-            raise
+
+        if save_paths is not None:
+            save_paths = self.ds.paths.get_path(save_paths) if isinstance(save_paths, str) else [self.ds.paths.get_path(path) for path in save_paths]
+
+        with FileAccess.load_file(load_path) as df:
+            logged_step = log_step(load_path, save_paths)(step)
+            result = logged_step(df, save_paths if isinstance(save_paths, str) else save_paths)
+
+            if isinstance(save_paths, str):
+                FileAccess.save_file(result, save_paths, self.dc.overwrite)
+
+        return result
 
     def main(self):
-        try:
-            self.run_step(self.run_make_dataset, 'raw', 'sdo')
-            self.run_step(self.run_initial_processor, 'sdo', 'process1')
-            self.run_step(self.run_build_features, 'process1', 'features1')
-            self.run_step(self.run_build_moving_averages, 'features1', 'frame_result1')
-            self.run_step(self.run_build_bounds, 'features1', ['interim', 'result1', 'frame_result2'])
-            self.run_step(self.run_build_ped, 'frame_result1', ['temp', 'temp'])
-        except Exception as e:
-            logging.exception(f'Error: {e}', exc_info=True)
-            raise
+        steps = [
+            (self.run_make_dataset, 'raw', 'sdo'),
+            (self.run_initial_processor, 'sdo', 'process1'),
+            (self.run_build_features, 'process1', 'features1'),
+            (self.run_build_moving_averages, 'features1', 'frame_result1'),
+            (self.run_build_bounds, 'features1', ['interim', 'result1', 'frame_result2']),
+            (self.run_build_ped, 'frame_result1', None),
+        ]
+        [self.run_step(step, load_path, save_paths) for step, load_path, save_paths in steps]
+        logging.info(f"{self.__class__.__name__} completed SUCCESSFULLY")
 
     def run_make_dataset(self, df: pd.DataFrame, save_path: Path) -> pd.DataFrame:
         return MakeDataset(self.dc).pipeline(df)
@@ -72,10 +73,3 @@ class DataPipeline:
 
     def run_bound_visuals(self, load_path):
         return BoundVisuals.bound_hours(load_path)
-
-
-if __name__ == '__main__':
-    from main import setup
-    setup()
-    data_state = DataState()
-    DataPipeline(data_state).main()

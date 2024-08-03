@@ -4,6 +4,7 @@ import logging
 from dataclasses import dataclass
 from dataclasses import field
 from pathlib import Path
+from pprint import pformat
 from typing import Dict
 
 import yaml
@@ -43,4 +44,4 @@ class DataState:
 
     def __post_init__(self):
         self.paths.validate_paths()
-        logging.debug(f"Initialized DataState with paths:\n{self.paths}")
+        logging.debug(f"Initialized DataState with paths:\n{pformat(self.paths)}")

@@ -9,7 +9,7 @@ import pandas as pd
 import seaborn as sns
 
 from utils.exceptions import InvalidConfigError
-from utils.setup_env import setup_project_env
+from utils.project_setup import setup_project_env
 from utils.view_file import FileHandler
 project_dir, project_config, setup_logs = setup_project_env()
 

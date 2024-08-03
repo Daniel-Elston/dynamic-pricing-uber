@@ -3,11 +3,20 @@ from __future__ import annotations
 import logging
 import time
 from functools import wraps
+from pathlib import Path
 from pprint import pformat
 from typing import Callable
+from typing import List
+from typing import Optional
+from typing import Union
 
 
-def log_step(load_path: str = None, save_paths: str = None, view: bool = False, input: bool = False, output: bool = False):
+def log_step(
+        load_path: Optional[Union[str, Path]] = None,
+        save_paths: Optional[Union[str, Path, List[Union[str, Path]]]] = None,
+        view: bool = False,
+        input: bool = False,
+        output: bool = False):
     def decorator(func: Callable):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -15,33 +24,38 @@ def log_step(load_path: str = None, save_paths: str = None, view: bool = False, 
             class_name = func.__qualname__.split('.')[0]
             func_name = func.__name__
             locate = f'`{script_name}.{class_name}.{func_name}`'
+
             logging.info(f"STARTING {locate} INITIATING")
             start_time = time.time()
+
             try:
                 result = func(*args, **kwargs)
-                if load_path:
-                    logging.info(f"Load path of: {pformat(load_path)}")
-                if save_paths:
-                    logging.info(f"Save path of: {pformat(save_paths)}")
-                if view:
-                    logging.info(f"Load path of {locate}:\n{pformat(load_path)}")
-                    logging.info(f"Save path of {locate}:\n{pformat(save_paths)}")
-                    logging.info(f"Args of {locate}:\n{pformat(args)}")
-                    logging.info(f"Kwargs of {locate}:\n{pformat(kwargs)}")
-                    logging.info(f"Result of {locate}:\n{pformat(result)}")
-                if input:
-                    logging.info(f"Args of {locate}:\n{pformat(args)}")
-                    logging.info(f"Kwargs of {locate}:\n{pformat(kwargs)}")
-                if output:
-                    logging.info(f"Result of {locate}:\n{pformat(result)}")
+
+                log_details = {
+                    "Load path": load_path,
+                    "Save paths": save_paths,
+                    "Args": args if input or view else None,
+                    "Kwargs": kwargs if input or view else None,
+                    "Result": result if output or view else None
+                }
+
+                for key, value in log_details.items():
+                    if value is not None:
+                        if isinstance(value, (str, Path)):
+                            logging.info(f"{key}: {value}")
+                        elif isinstance(value, list):
+                            logging.info(f"{key}:\n{pformat(value)}")
+                        else:
+                            logging.info(f"{key}:\n{pformat(value)}")
+
                 logging.info(f"COMPLETED {locate} SUCCESSFULLY\n")
                 return result
             except Exception as e:
                 logging.exception(f"Error in {locate}: {str(e)}")
                 raise
             finally:
-                end_time = time.time()
-                duration = end_time - start_time
+                duration = time.time() - start_time
                 logging.debug(f"{locate} took {duration:.2f} seconds to execute")
+
         return wrapper
     return decorator
