@@ -11,7 +11,7 @@ class MakeDataset:
     def __init__(self, data_config: DataConfig):
         self.dc = data_config
 
-    def base_process(self, df: pd.DataFrame) -> pd.DataFrame:
+    def base_process(self, df):
         rename_map = {
             'Unnamed: 0': 'uid',
             'pickup_datetime': 'timestamp',
@@ -20,6 +20,6 @@ class MakeDataset:
         df = df.rename(columns=rename_map)
         return df.drop(columns=['key'])
 
-    def pipeline(self, df):
+    def pipeline(self, df: pd.DataFrame) -> pd.DataFrame:
         df = self.base_process(df)
         return df

@@ -26,7 +26,7 @@ class DataPaths:
     def validate_paths(self):
         for name, path in self.paths.items():
             if not path.exists():
-                logging.warning(f"Path {name} does not exist: {path}")
+                logging.warning(f"Path {name} does not exist: {path}. Check paths.yaml")
 
 
 @dataclass
@@ -34,7 +34,8 @@ class DataConfig:
     overwrite: bool = True
     save_fig: bool = True
     window_select: int = 6
-    sma_windows: list = field(default_factory=lambda: [1, 2, 4, 6])
+    ma_windows: list = field(default_factory=lambda: [1, 3, 6, 12, 24])
+    lag_windows: list = field(default_factory=lambda: [1, 3, 6, 12, 24])
 
 
 @dataclass

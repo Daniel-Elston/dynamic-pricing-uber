@@ -8,10 +8,10 @@ data_state_paths:
   sdo: data/sdo/uber.parquet
   process1: data/sdo/initial_process.parquet
   features1: data/sdo/initial_features.parquet
-  bound_features: data/sdo/bound_features.parquet
+  features2: data/sdo/model_features.parquet
+  features3: data/sdo/test_features.parquet
   interim: data/interim/
   frame_result2: data/result_frames/
-  frame_result1: data/result_frames/sma.parquet
   result1: reports/results/bound_hours.json
 
 
