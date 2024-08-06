@@ -3,7 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Callable
 from typing import List
+from typing import Optional
 from typing import Union
+
+import pandas as pd
 
 from config.data import DataConfig
 from config.data import DataState
@@ -16,7 +19,13 @@ class Running:
         self.ds = data_state
         self.dc = data_config
 
-    def run_step(self, step: Callable, load_path: str, save_paths: Union[str, List[str], None] = None):
+    def run_step(
+        self, step: Callable,
+        # load_path: Optional[Union[str, List[str]]] = None,
+        load_path: str,
+        save_paths: Optional[Union[str, List[str]]] = None,
+            df: Optional[Union[pd.DataFrame]] = None):
+
         load_path = self.ds.paths.get_path(load_path)
 
         if save_paths is not None:
@@ -28,3 +37,10 @@ class Running:
 
             if isinstance(save_paths, Path):
                 FileAccess.save_file(result, save_paths, self.dc.overwrite)
+
+    def run_child_step(
+            self, step: Callable,
+            df: pd.DataFrame,
+            args: Optional[Union[dict, None]] = None,
+            kwargs: Optional[Union[dict, None]] = None) -> pd.DataFrame:
+        return step(df, **args) if args is not None else step(df)

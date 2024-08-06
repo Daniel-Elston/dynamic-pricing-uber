@@ -39,10 +39,10 @@ class DataPipeline:
         logging.info(f"{self.__class__.__name__} completed SUCCESSFULLY")
 
     def run_make_dataset(self, df: pd.DataFrame, save_path: Path) -> pd.DataFrame:
-        return MakeDataset(self.dc).pipeline(df)
+        return MakeDataset(self.ds, self.dc).pipeline(df)
 
     def run_initial_processor(self, df: pd.DataFrame, save_path: Path) -> pd.DataFrame:
-        return InitialProcessor(self.dc).pipeline(df)
+        return InitialProcessor(self.ds, self.dc).pipeline(df)
 
     def run_build_features(self, df: pd.DataFrame, save_path: Path) -> pd.DataFrame:
         return BuildFeatures(self.ds, self.dc).pipeline(df)
@@ -55,7 +55,7 @@ class DataPipeline:
         return BuildModelFeatures(self.ds, self.dc).pipeline(df)
 
     def run_dynamic_pricing(self, df: pd.DataFrame, save_path: Path) -> pd.DataFrame:
-        return DynamicPricing(self.mc).pipeline(df)
+        return DynamicPricing(self.ds, self.dc, self.mc).pipeline(df)
 
     # def run_build_ped(self, df: pd.DataFrame, save_path: Path) -> pd.DataFrame:
     #     return BuildPED(self.ds, self.dc).pipeline(df)

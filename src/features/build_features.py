@@ -6,6 +6,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 from config.data import DataConfig
 from config.data import DataState
+from utils.running import Running
 
 
 class BuildFeatures:
@@ -14,7 +15,26 @@ class BuildFeatures:
     def __init__(self, data_state: DataState, data_config: DataConfig):
         self.ds = data_state
         self.dc = data_config
+        self.runner = Running(self.ds, self.dc)
         self.scaler = MinMaxScaler(feature_range=(0, 1))
+
+    def pipeline(self, df: pd.DataFrame) -> pd.DataFrame:
+        steps = [
+            self.build_dt_features,
+            self.build_haversine_distance,
+            self.build_price_per_mile,
+            self.build_count_per_mile,
+            self.build_demand_features,
+            self.build_bound_features,
+            self.build_ratios,
+            self.build_moving_averages,
+            self.build_price_features,
+            self.build_distance_features,
+            self.build_lagged_features
+        ]
+        for step in steps:
+            df = self.runner.run_child_step(step, df)
+        return df
 
     def build_dt_features(self, df):
         df['hour'] = df['timestamp'].dt.hour.astype('int32')
@@ -191,6 +211,11 @@ class BuildFeatures:
             df[f'cpm_lag_{lag}'] = df.groupby('date')['count_per_mile'].shift(lag).ffill()
         return df
 
+    def round_df(self, df):
+        float_cols = df.dtypes[df.dtypes == 'float64'].index
+        df[float_cols] = df[float_cols].round(2)
+        return df.dropna()
+
     # def save_summary_stats(self, df):
     #     summary_stats = df.groupby(['hour', 'dow_num']).agg({
     #         'price_per_mile': ['mean', 'min', 'max'],
@@ -199,21 +224,3 @@ class BuildFeatures:
     #         'avg_hourly_demand': 'first',
     #         'avg_daily_demand': 'first'
     #     }).reset_index()
-
-    def pipeline(self, df: pd.DataFrame) -> pd.DataFrame:
-        df = self.build_dt_features(df)
-        df = self.build_haversine_distance(df)
-        df = self.build_price_per_mile(df)
-        df = self.build_count_per_mile(df)
-        df = self.build_demand_features(df)
-        df = self.build_bound_features(df)
-        df = self.build_ratios(df)
-        df = self.build_moving_averages(df)
-
-        df = self.build_price_features(df)
-        df = self.build_distance_features(df)
-        df = self.build_lagged_features(df)
-
-        float_cols = df.dtypes[df.dtypes == 'float64'].index
-        df[float_cols] = df[float_cols].round(2)
-        return df

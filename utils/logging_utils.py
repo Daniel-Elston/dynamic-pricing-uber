@@ -32,8 +32,8 @@ def log_step(
                 result = func(*args, **kwargs)
 
                 log_details = {
-                    "Load path": load_path,
-                    "Save paths": save_paths,
+                    "Load path": load_path if load_path or view or input else None,
+                    "Save paths": save_paths if save_paths or view or output else None,
                     "Args": args if input or view else None,
                     "Kwargs": kwargs if input or view else None,
                     "Result": result if output or view else None

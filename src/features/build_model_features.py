@@ -6,6 +6,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 from config.data import DataConfig
 from config.data import DataState
+from utils.running import Running
 
 
 class BuildModelFeatures:
@@ -14,7 +15,25 @@ class BuildModelFeatures:
     def __init__(self, data_state: DataState, data_config: DataConfig):
         self.ds = data_state
         self.dc = data_config
+        self.runner = Running(self.ds, self.dc)
         self.scaler = MinMaxScaler(feature_range=(0, 1))
+
+    def pipeline(self, df: pd.DataFrame) -> pd.DataFrame:
+        steps = [
+            self.build_dt_features,
+            self.build_haversine_distance,
+            self.build_price_per_mile,
+            self.build_count_per_mile,
+            self.build_demand_features,
+            self.build_bound_features,
+            self.build_ratios,
+            self.build_scales,
+            self.build_moving_averages,
+            self.round_df
+        ]
+        for step in steps:
+            df = self.runner.run_child_step(step, df)
+        return df
 
     def build_dt_features(self, df):
         df['date'] = df['timestamp'].dt.date.astype('datetime64[ns]')
@@ -115,17 +134,7 @@ class BuildModelFeatures:
             df[col + '_rolling'] = df[col].rolling(window=window).mean()
         return df
 
-    def pipeline(self, df):
-        df = self.build_dt_features(df)
-        df = self.build_haversine_distance(df)
-        df = self.build_price_per_mile(df)
-        df = self.build_count_per_mile(df)
-        df = self.build_demand_features(df)
-        df = self.build_bound_features(df)
-        df = self.build_ratios(df)
-        df = self.build_scales(df)
-        df = self.build_moving_averages(df)
-
+    def round_df(self, df):
         float_cols = df.dtypes[df.dtypes == 'float64'].index
         df[float_cols] = df[float_cols].round(2)
-        return df
+        return df.dropna()

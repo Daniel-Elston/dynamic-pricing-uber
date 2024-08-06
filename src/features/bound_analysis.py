@@ -9,6 +9,7 @@ from sklearn.preprocessing import MinMaxScaler
 from config.data import DataConfig
 from config.data import DataState
 from config.model import ModelConfig
+from utils.running import Running
 sns.set_theme(style="whitegrid")
 
 
@@ -17,7 +18,32 @@ class AnalyseBounds:
         self.ds = data_state
         self.dc = data_config
         self.mc = model_config
+        self.runner = Running(self.ds, self.dc)
         self.scaler = MinMaxScaler()
+
+    def pipeline(self, df: pd.DataFrame) -> pd.DataFrame:
+        steps = [
+            (self.analyze_and_plot_ratio_distributions, {
+                'time_periods': self.mc.time_periods_3hr,
+                'window_size': 3,
+                'bins': self.mc.max_ratio_bins,
+                'ratio_columns': ['3h_partly_cpm_max_ratio', '3h_partly_cpm_max_ratio_scaled']}),
+            (self.analyze_and_plot_ratio_distributions, {
+                'time_periods': self.mc.time_periods_3hr,
+                'window_size': 3,
+                'bins': self.mc.mean_ratio_bins,
+                'ratio_columns': ['3h_partly_cpm_mean_ratio_scaled']})
+        ]
+        for step in steps:
+            step_func, args = step
+            self.runner.run_child_step(step_func, df, args)
+        return df
+
+    def analyze_and_plot_ratio_distributions(self, df, time_periods, window_size, bins, ratio_columns):
+        for ratio_column in ratio_columns:
+            ratio_counts = self.analyze_ratio_distribution(df, ratio_column, time_periods, bins)
+            self.plot_ratio_distribution(ratio_counts, ratio_column, window_size)
+        return ratio_counts
 
     def analyze_ratio_distribution(self, df, ratio_column, time_periods, bins):
         df['time_period'] = pd.cut(
@@ -60,24 +86,5 @@ class AnalyseBounds:
         plt.savefig(f'reports/figures/bound_analysis/{ratio_column}.png')
         plt.show()
 
-    def analyze_and_plot_ratio_distributions(self, df, time_periods, window_size, bins, ratio_columns):
-        for ratio_column in ratio_columns:
-            ratio_counts = self.analyze_ratio_distribution(df, ratio_column, time_periods, bins)
-            self.plot_ratio_distribution(ratio_counts, ratio_column, window_size)
-        return ratio_counts
-
     def _tuple_to_bin_edges(self, bins):
         return {k[0]: k[1] for k in bins.keys()}
-
-    def pipeline(self, df: pd.DataFrame) -> pd.DataFrame:
-        df = df.dropna()
-
-        self.analyze_and_plot_ratio_distributions(
-            df, self.mc.time_periods_3hr, 3, self.mc.max_ratio_bins, [
-                '3h_partly_cpm_max_ratio', '3h_partly_cpm_max_ratio_scaled'])
-
-        self.analyze_and_plot_ratio_distributions(
-            df, self.mc.time_periods_3hr, 3, self.mc.mean_ratio_bins, [
-                '3h_partly_cpm_mean_ratio_scaled'])
-
-        return df
