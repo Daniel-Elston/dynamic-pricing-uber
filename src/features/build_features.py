@@ -10,7 +10,7 @@ from utils.running import Running
 
 
 class BuildFeatures:
-    """Build/compose simple datetime features"""
+    """Build/compose Extensive features for analysis"""
 
     def __init__(self, data_state: DataState, data_config: DataConfig):
         self.ds = data_state

@@ -14,6 +14,8 @@ sns.set_theme(style="whitegrid")
 
 
 class AnalyseBounds:
+    """Analyse bounds of time periods (periods of max/min price/demand)"""
+
     def __init__(self, data_state: DataState, data_config: DataConfig, model_config: ModelConfig):
         self.ds = data_state
         self.dc = data_config

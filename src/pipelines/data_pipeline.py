@@ -1,10 +1,5 @@
 from __future__ import annotations
 
-import logging
-from pathlib import Path
-
-import pandas as pd
-
 from config.data import DataConfig
 from config.data import DataState
 from config.model import ModelConfig
@@ -15,8 +10,6 @@ from src.features.build_features import BuildFeatures
 from src.features.build_model_features import BuildModelFeatures
 from src.models.pricing import DynamicPricing
 from utils.running import Running
-# from src.features.build_ped import BuildPED
-# from src.models.train import TrainModel
 
 
 class DataPipeline:
@@ -28,37 +21,12 @@ class DataPipeline:
 
     def main(self):
         steps = [
-            (self.run_make_dataset, 'raw', 'sdo'),
-            (self.run_initial_processor, 'sdo', 'process1'),
-            (self.run_build_features, 'process1', 'features1'),
-            (self.run_bounds_analysis, 'features1', None),
-            (self.run_build_model_features, 'process1', 'features2'),
-            (self.run_dynamic_pricing, 'features2', None),
+            (MakeDataset(self.ds, self.dc), 'raw', 'sdo'),
+            (InitialProcessor(self.ds, self.dc), 'sdo', 'process1'),
+            (BuildFeatures(self.ds, self.dc), 'process1', 'features1'),
+            (AnalyseBounds(self.ds, self.dc, self.mc), 'features1', None),
+            (BuildModelFeatures(self.ds, self.dc), 'process1', 'features2'),
+            (DynamicPricing(self.ds, self.dc, self.mc), 'features2', 'result'),
         ]
-        [self.runner.run_step(step, load_path, save_paths) for step, load_path, save_paths in steps]
-        logging.info(f"{self.__class__.__name__} completed SUCCESSFULLY")
-
-    def run_make_dataset(self, df: pd.DataFrame, save_path: Path) -> pd.DataFrame:
-        return MakeDataset(self.ds, self.dc).pipeline(df)
-
-    def run_initial_processor(self, df: pd.DataFrame, save_path: Path) -> pd.DataFrame:
-        return InitialProcessor(self.ds, self.dc).pipeline(df)
-
-    def run_build_features(self, df: pd.DataFrame, save_path: Path) -> pd.DataFrame:
-        return BuildFeatures(self.ds, self.dc).pipeline(df)
-
-    def run_bounds_analysis(self, df: pd.DataFrame, save_path: Path) -> pd.DataFrame:
-        return AnalyseBounds(self.ds, self.dc, self.mc).pipeline(df)
-
-    def run_build_model_features(self, df: pd.DataFrame, save_path: Path) -> pd.DataFrame:
-        """Build Minimal Features required for Alg."""
-        return BuildModelFeatures(self.ds, self.dc).pipeline(df)
-
-    def run_dynamic_pricing(self, df: pd.DataFrame, save_path: Path) -> pd.DataFrame:
-        return DynamicPricing(self.ds, self.dc, self.mc).pipeline(df)
-
-    # def run_build_ped(self, df: pd.DataFrame, save_path: Path) -> pd.DataFrame:
-    #     return BuildPED(self.ds, self.dc).pipeline(df)
-
-    # def run_train_model(self, df: pd.DataFrame, save_path: Path) -> pd.DataFrame:
-    #     return TrainModel().pipeline(df)
+        for step, load_path, save_paths in steps:
+            self.runner.run_parent_step(step.pipeline, load_path, save_paths)

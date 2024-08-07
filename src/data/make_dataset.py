@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import warnings
+
 import pandas as pd
 
 from config.data import DataConfig
 from config.data import DataState
 from utils.running import Running
+warnings.filterwarnings("ignore")
 
 
 class MakeDataset:

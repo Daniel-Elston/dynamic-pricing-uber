@@ -12,6 +12,8 @@ from utils.running import Running
 
 
 class DynamicPricing:
+    """Apply dynamic pricing to a dataframe."""
+
     def __init__(self, data_state: DataState, data_config: DataConfig, model_config: ModelConfig):
         self.ds = data_state
         self.dc = data_config
@@ -28,8 +30,8 @@ class DynamicPricing:
             df = self.runner.run_child_step(step, df)
 
         dynamic_profit = df['dynamic_price'].sum()
-        logging.info(f"Base price: {base_profit:.2f}, Dynamic price: {dynamic_profit:.2f}")
-        logging.info(f"Price difference: {dynamic_profit - base_profit:.2f}")
+        logging.info(f"Base return: {base_profit:.2f}, Dynamic return: {dynamic_profit:.2f}")
+        logging.info(f"Return difference: {dynamic_profit - base_profit:.2f}")
         return df
 
     def calculate_surge_multiplier(self, mean_ratio: float) -> float:
@@ -56,7 +58,6 @@ class DynamicPricing:
         time_multiplier = self.calculate_time_multiplier(row['day_part_3hr'])
         demand_multiplier = self.calculate_demand_multiplier(row)
         weekend_multiplier = 1.1 if row['is_weekend'] else 1.0
-
         return (time_multiplier + demand_multiplier + weekend_multiplier) / 3
 
     def calculate_dynamic_price(self, row: Dict) -> float:

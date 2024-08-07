@@ -9,13 +9,8 @@ data_state_paths:
   process1: data/sdo/initial_process.parquet
   features1: data/sdo/initial_features.parquet
   features2: data/sdo/model_features.parquet
-  features3: data/sdo/test_features.parquet
   interim: data/interim/
-  frame_result2: data/result_frames/
-  result1: reports/results/bound_hours.json
-
-
-  temp: data/temp/
+  result: data/result_frames/dynamic-prices.parquet
 
 ##########################################################################################
 

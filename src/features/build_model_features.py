@@ -10,7 +10,7 @@ from utils.running import Running
 
 
 class BuildModelFeatures:
-    """Build/compose simple datetime features"""
+    """Build only features required by model (instead of buidling extenive list of features and selecting)"""
 
     def __init__(self, data_state: DataState, data_config: DataConfig):
         self.ds = data_state
