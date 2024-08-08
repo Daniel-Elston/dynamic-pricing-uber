@@ -7,27 +7,27 @@ from config.data import DataPaths
 from config.data import DataState
 from config.model import ModelConfig
 from src.pipelines.data_pipeline import DataPipeline
+from utils.execution import TaskExecutor
 from utils.project_setup import setup_project
-from utils.running import Running
 
 
 class MainPipeline:
-    def __init__(self, data_state: DataState, data_config: DataConfig, model_config: ModelConfig):
+    def __init__(self, exe: TaskExecutor, data_state: DataState, model_config: ModelConfig):
+        self.exe = exe
         self.ds = data_state
-        self.dc = data_config
+        self.dc = self.ds.config
         self.mc = model_config
-        self.runner = Running(self.ds, self.dc)
 
     def run(self):
         steps = [
-            (DataPipeline(ds, dc, mc), 'raw', 'result'),
+            (DataPipeline(exe, ds, mc), 'raw', 'result'),
         ]
         for step, load_path, save_paths in steps:
             logging.info(
                 f'INITIATING {step.__class__.__name__} with:\n\
-                    Input_path: ``{self.ds.paths.get_path(load_path)}\n\
+                    Input_path: ``{self.ds.paths.get_path(load_path)}``\n\
                     Output_paths: ``{self.ds.paths.get_path(save_paths)}``\n')
-            self.runner.run_main_step(step.main, load_path, save_paths)
+            self.exe.run_main_step(step.main, load_path, save_paths)
             logging.info(f'{step.__class__.__name__} completed SUCCESSFULLY.\n')
 
 
@@ -37,10 +37,10 @@ if __name__ == '__main__':
     dc, dp = DataConfig(), DataPaths()
     ds = DataState(dp, dc)
     mc = ModelConfig()
-    runner = Running(ds, dc)
+    exe = TaskExecutor(ds)
 
     logging.info("INITIATING main.py MainPipeline...\n")
     try:
-        MainPipeline(ds, dc, mc).run()
+        MainPipeline(exe, ds, mc).run()
     except Exception as e:
-        logging.error(f'Pipeline terminated due to unexpected error: {e}', exc_info=False)
+        logging.error(f'Pipeline terminated due to unexpected error: {e}', exc_info=True)

@@ -11,6 +11,13 @@ from typing import Optional
 from typing import Union
 
 
+def log_cls_methods(cls):
+    for name, method in cls.__dict__.items():
+        if callable(method):
+            setattr(cls, name, log_step(view=True)(method))
+    return cls
+
+
 def log_step(
         load_path: Optional[Union[str, Path]] = None,
         save_paths: Optional[Union[str, Path, List[Union[str, Path]]]] = None,

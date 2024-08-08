@@ -5,17 +5,16 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 
 from config.data import DataConfig
-from config.data import DataState
-from utils.running import Running
+from utils.execution import TaskExecutor
+
+# @log_all_methods
 
 
-class BuildFeatures:
+class BuildAnalysisFeatures:
     """Build/compose Extensive features for analysis"""
 
-    def __init__(self, data_state: DataState, data_config: DataConfig):
-        self.ds = data_state
+    def __init__(self, data_config: DataConfig):
         self.dc = data_config
-        self.runner = Running(self.ds, self.dc)
         self.scaler = MinMaxScaler(feature_range=(0, 1))
 
     def pipeline(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -30,10 +29,12 @@ class BuildFeatures:
             self.build_moving_averages,
             self.build_price_features,
             self.build_distance_features,
-            self.build_lagged_features
+            self.build_lagged_features,
+            self.round_and_optimize_df
         ]
+        df = df[-int((len(df)*0.3)):]
         for step in steps:
-            df = self.runner.run_child_step(step, df)
+            df = TaskExecutor.run_child_step(step, df)
         return df
 
     def build_dt_features(self, df):
@@ -211,10 +212,12 @@ class BuildFeatures:
             df[f'cpm_lag_{lag}'] = df.groupby('date')['count_per_mile'].shift(lag).ffill()
         return df
 
-    def round_df(self, df):
-        float_cols = df.dtypes[df.dtypes == 'float64'].index
-        df[float_cols] = df[float_cols].round(2)
-        return df.dropna()
+    def round_and_optimize_df(self, df):
+        float_cols = df.select_dtypes(include=['float32', 'float64']).columns
+        df[float_cols] = df[float_cols].round(4)
+        int_cols = df.select_dtypes(include=['int64']).columns
+        df[int_cols] = df[int_cols].astype('int32')
+        return df
 
     # def save_summary_stats(self, df):
     #     summary_stats = df.groupby(['hour', 'dow_num']).agg({

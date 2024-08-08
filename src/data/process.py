@@ -4,18 +4,14 @@ import logging
 
 import pandas as pd
 
-from config.data import DataConfig
-from config.data import DataState
-from utils.running import Running
+from utils.execution import TaskExecutor
 
 
 class InitialProcessor:
     """Process extreme outliers, datetimes, timezone and sorting"""
 
-    def __init__(self, data_state: DataState, data_config: DataConfig):
-        self.ds = data_state
-        self.dc = data_config
-        self.runner = Running(self.ds, self.dc)
+    def __init__(self):
+        pass
 
     def pipeline(self, df: pd.DataFrame) -> pd.DataFrame:
         logging.debug(f'Preprocess shape: {df.shape}')
@@ -27,7 +23,7 @@ class InitialProcessor:
             self.remove_duplicates
         ]
         for step in steps:
-            df = self.runner.run_child_step(step, df)
+            df = TaskExecutor.run_child_step(step, df)
         logging.debug(f'PostProcess shape: {df.shape}')
         return df
 

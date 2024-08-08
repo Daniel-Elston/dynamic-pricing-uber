@@ -4,18 +4,13 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 
-from config.data import DataConfig
-from config.data import DataState
-from utils.running import Running
+from utils.execution import TaskExecutor
 
 
 class BuildModelFeatures:
     """Build only features required by model (instead of buidling extenive list of features and selecting)"""
 
-    def __init__(self, data_state: DataState, data_config: DataConfig):
-        self.ds = data_state
-        self.dc = data_config
-        self.runner = Running(self.ds, self.dc)
+    def __init__(self):
         self.scaler = MinMaxScaler(feature_range=(0, 1))
 
     def pipeline(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -29,10 +24,10 @@ class BuildModelFeatures:
             self.build_ratios,
             self.build_scales,
             self.build_moving_averages,
-            self.round_df
+            self.round_and_optimize_df
         ]
         for step in steps:
-            df = self.runner.run_child_step(step, df)
+            df = TaskExecutor.run_child_step(step, df)
         return df
 
     def build_dt_features(self, df):
@@ -134,7 +129,9 @@ class BuildModelFeatures:
             df[col + '_rolling'] = df[col].rolling(window=window).mean()
         return df
 
-    def round_df(self, df):
-        float_cols = df.dtypes[df.dtypes == 'float64'].index
-        df[float_cols] = df[float_cols].round(2)
-        return df.dropna()
+    def round_and_optimize_df(self, df):
+        float_cols = df.select_dtypes(include=['float32', 'float64']).columns
+        df[float_cols] = df[float_cols].round(4)
+        int_cols = df.select_dtypes(include=['int64']).columns
+        df[int_cols] = df[int_cols].astype('int32')
+        return df

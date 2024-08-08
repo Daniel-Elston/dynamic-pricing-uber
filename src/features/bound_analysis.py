@@ -6,21 +6,16 @@ import pandas as pd
 import seaborn as sns
 from sklearn.preprocessing import MinMaxScaler
 
-from config.data import DataConfig
-from config.data import DataState
 from config.model import ModelConfig
-from utils.running import Running
+from utils.execution import TaskExecutor
 sns.set_theme(style="whitegrid")
 
 
 class AnalyseBounds:
     """Analyse bounds of time periods (periods of max/min price/demand)"""
 
-    def __init__(self, data_state: DataState, data_config: DataConfig, model_config: ModelConfig):
-        self.ds = data_state
-        self.dc = data_config
+    def __init__(self, model_config: ModelConfig):
         self.mc = model_config
-        self.runner = Running(self.ds, self.dc)
         self.scaler = MinMaxScaler()
 
     def pipeline(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -38,7 +33,7 @@ class AnalyseBounds:
         ]
         for step in steps:
             step_func, args = step
-            self.runner.run_child_step(step_func, df, args)
+            TaskExecutor.run_child_step(step_func, df, args)
         return df
 
     def analyze_and_plot_ratio_distributions(self, df, time_periods, window_size, bins, ratio_columns):

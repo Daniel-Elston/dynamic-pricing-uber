@@ -8,16 +8,15 @@ from typing import Union
 
 import pandas as pd
 
-from config.data import DataConfig
 from config.data import DataState
 from utils.file_access import FileAccess
 from utils.logging_utils import log_step
 
 
-class Running:
-    def __init__(self, data_state: DataState, data_config: DataConfig):
+class TaskExecutor:
+    def __init__(self, data_state: DataState):
         self.ds = data_state
-        self.dc = data_config
+        self.dc = self.ds.config
 
     def run_main_step(
             self, step: Callable,
@@ -66,8 +65,9 @@ class Running:
             result = logged_step(df)
             return result
 
+    @staticmethod
     def run_child_step(
-            self, step: Callable,
+            step: Callable,
             df: pd.DataFrame,
             args: Optional[Union[dict, None]] = None,
             kwargs: Optional[Union[dict, None]] = None) -> pd.DataFrame:

@@ -5,49 +5,43 @@ from typing import Dict
 
 import pandas as pd
 
-from config.data import DataConfig
-from config.data import DataState
 from config.model import ModelConfig
-from utils.running import Running
+from utils.execution import TaskExecutor
 
 
 class DynamicPricing:
     """Apply dynamic pricing to a dataframe."""
 
-    def __init__(self, data_state: DataState, data_config: DataConfig, model_config: ModelConfig):
-        self.ds = data_state
-        self.dc = data_config
-        self.runner = Running(self.ds, self.dc)
-        self.config = model_config
+    def __init__(self, model_config: ModelConfig):
+        self.mc = model_config
 
     def pipeline(self, df: pd.DataFrame) -> pd.DataFrame:
-        base_profit = df['price'].sum()
-
         steps = [
             self.apply_dynamic_pricing
         ]
         for step in steps:
-            df = self.runner.run_child_step(step, df)
+            df = TaskExecutor.run_child_step(step, df)
 
+        base_profit = df['price'].sum()
         dynamic_profit = df['dynamic_price'].sum()
         logging.info(f"Base return: {base_profit:.2f}, Dynamic return: {dynamic_profit:.2f}")
         logging.info(f"Return difference: {dynamic_profit - base_profit:.2f}")
         return df
 
     def calculate_surge_multiplier(self, mean_ratio: float) -> float:
-        for (lower, upper), multiplier in self.config.mean_ratio_bins.items():
+        for (lower, upper), multiplier in self.mc.mean_ratio_bins.items():
             if lower <= mean_ratio < upper:
                 return multiplier
         return 1.0
 
     def calculate_base_multiplier(self, max_ratio: float) -> float:
-        for (lower, upper), multiplier in self.config.max_ratio_bins.items():
+        for (lower, upper), multiplier in self.mc.max_ratio_bins.items():
             if lower <= max_ratio < upper:
                 return multiplier
         return 1.0
 
     def calculate_time_multiplier(self, time_period: str) -> float:
-        return self.config.day_parts.get(time_period, 1.0)
+        return self.mc.day_parts.get(time_period, 1.0)
 
     def calculate_demand_multiplier(self, row: Dict) -> float:
         surge_multiplier = self.calculate_surge_multiplier(row['3h_partly_cpm_mean_ratio'])
