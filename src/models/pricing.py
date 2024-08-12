@@ -5,15 +5,15 @@ from typing import Dict
 
 import pandas as pd
 
-from config.model import ModelConfig
+from config.state_init import StateManager
 from utils.execution import TaskExecutor
 
 
 class DynamicPricing:
     """Apply dynamic pricing to a dataframe."""
 
-    def __init__(self, model_config: ModelConfig):
-        self.mc = model_config
+    def __init__(self, state: StateManager):
+        self.mc = state.model_config
 
     def pipeline(self, df: pd.DataFrame) -> pd.DataFrame:
         steps = [

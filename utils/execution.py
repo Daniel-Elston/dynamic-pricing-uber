@@ -8,15 +8,15 @@ from typing import Union
 
 import pandas as pd
 
-from config.data import DataState
+from config.state_init import StateManager
 from utils.file_access import FileAccess
 from utils.logging_utils import log_step
 
 
 class TaskExecutor:
-    def __init__(self, data_state: DataState):
-        self.ds = data_state
-        self.dc = self.ds.config
+    def __init__(self, state: StateManager):
+        self.data_config = state.data_config
+        self.paths = state.paths
 
     def run_main_step(
             self, step: Callable,
@@ -25,12 +25,6 @@ class TaskExecutor:
             args: Optional[Union[dict, None]] = None,
             kwargs: Optional[Union[dict, None]] = None) -> pd.DataFrame:
         """Pipeline runner for top-level main.py."""
-        if load_path:
-            load_path = self.ds.paths.get_path(load_path)
-        if save_paths and isinstance(save_paths, str):
-            save_paths = self.ds.paths.get_path(save_paths)
-        if save_paths and isinstance(save_paths, list):
-            save_paths = [self.ds.paths.get_path(path) for path in save_paths]
         return step(**args) if args is not None else step()
 
     def run_parent_step(
@@ -43,23 +37,23 @@ class TaskExecutor:
             self._parent_save_helper(step, df, load_path, save_paths)
 
         else:
-            load_path = self.ds.paths.get_path(load_path)
+            load_path = self.paths.get_path(load_path)
             with FileAccess.load_file(load_path) as df:
                 self._parent_save_helper(step, df, load_path, save_paths)
 
     def _parent_save_helper(self, step, df, load_path, save_paths):
         if save_paths is not None:
             if isinstance(save_paths, str):
-                save_paths = self.ds.paths.get_path(save_paths)
+                save_paths = self.paths.get_path(save_paths)
                 logged_step = log_step(load_path, save_paths)(step)
                 result = logged_step(df)
-                FileAccess.save_file(result, save_paths, self.dc.overwrite)
+                FileAccess.save_file(result, save_paths, self.data_config.overwrite)
             if isinstance(save_paths, list):
-                save_paths = [self.ds.paths.get_path(path) for path in save_paths]
+                save_paths = [self.paths.get_path(path) for path in save_paths]
                 for path in save_paths:
                     logged_step = log_step(load_path, save_paths)(step)
                     result = logged_step(df)
-                    FileAccess.save_file(result, path, self.dc.overwrite)
+                    FileAccess.save_file(result, path, self.data_config.overwrite)
         else:
             logged_step = log_step(load_path, save_paths)(step)
             result = logged_step(df)

@@ -6,7 +6,7 @@ import pandas as pd
 import seaborn as sns
 from sklearn.preprocessing import MinMaxScaler
 
-from config.model import ModelConfig
+from config.state_init import StateManager
 from utils.execution import TaskExecutor
 sns.set_theme(style="whitegrid")
 
@@ -14,8 +14,8 @@ sns.set_theme(style="whitegrid")
 class AnalyseBounds:
     """Analyse bounds of time periods (periods of max/min price/demand)"""
 
-    def __init__(self, model_config: ModelConfig):
-        self.mc = model_config
+    def __init__(self, state: StateManager):
+        self.mc = state.model_config
         self.scaler = MinMaxScaler()
 
     def pipeline(self, df: pd.DataFrame) -> pd.DataFrame:

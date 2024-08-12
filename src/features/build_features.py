@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 
-from config.data import DataConfig
+from config.state_init import StateManager
 from utils.execution import TaskExecutor
 
 # @log_all_methods
@@ -13,8 +13,8 @@ from utils.execution import TaskExecutor
 class BuildAnalysisFeatures:
     """Build/compose Extensive features for analysis"""
 
-    def __init__(self, data_config: DataConfig):
-        self.dc = data_config
+    def __init__(self, state: StateManager):
+        self.dc = state.data_config
         self.scaler = MinMaxScaler(feature_range=(0, 1))
 
     def pipeline(self, df: pd.DataFrame) -> pd.DataFrame:
