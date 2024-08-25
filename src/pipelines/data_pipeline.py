@@ -17,12 +17,11 @@ class DataPipeline:
 
     def main(self):
         steps = [
-            (MakeDataset(), 'raw', 'sdo'),
-            (InitialProcessor(), 'sdo', 'process1'),
-            (BuildAnalysisFeatures(self.state), 'process1', 'features1'),
-            (AnalyseBounds(self.state), 'features1', None),
-            (BuildModelFeatures(), 'process1', 'features2'),
-            (DynamicPricing(self.state), 'features2', 'result'),
+            (MakeDataset().pipeline, 'raw', 'sdo'),
+            (InitialProcessor().pipeline, 'sdo', 'process1'),
+            (BuildAnalysisFeatures(self.state).pipeline, 'process1', 'features1'),
+            (AnalyseBounds(self.state).pipeline, 'features1', None),
+            (BuildModelFeatures().pipeline, 'process1', 'features2'),
+            (DynamicPricing(self.state).pipeline, 'features2', 'result'),
         ]
-        for step, load_path, save_paths in steps:
-            self.exe.run_parent_step(step.pipeline, load_path, save_paths)
+        self.exe._execute_steps(steps, stage="parent")

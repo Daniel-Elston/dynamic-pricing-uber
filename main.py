@@ -15,18 +15,15 @@ class MainPipeline:
 
     def run(self):
         logging.info(
-            f"INITIATING {__class__.__name__} from top-level script: ``{__file__.split('/')[-1]}``...\n")
+            f"INITIATING {self.__class__.__name__} from top-level script: ``{__file__.split('/')[-1]}``...\n"
+        )
         steps = [
             (DataPipeline(state, exe).main, 'raw', 'result'),
         ]
-        for step, load_path, save_paths in steps:
-            logging.info(
-                f'INITIATING {step.__self__.__class__.__name__} with:\n'
-                f'    Input_path: {self.state.paths.get_path(load_path)}\n'
-                f'    Output_paths: {self.state.paths.get_path(save_paths)}\n')
-            self.exe.run_main_step(step, load_path, save_paths)
-            logging.info(f'{step.__self__.__class__.__name__} completed SUCCESSFULLY.\n')
-        logging.info(f'{__class__.__name__} completed SUCCESSFULLY.\n')
+        self.exe._execute_steps(steps, stage="main")
+        logging.info(
+            f'Completed {self.__class__.__name__} from top-level script: ``{__file__.split("/")[-1]}`` SUCCESSFULLY.\n'
+        )
 
 
 if __name__ == '__main__':

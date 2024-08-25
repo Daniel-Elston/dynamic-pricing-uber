@@ -19,6 +19,7 @@ class BuildAnalysisFeatures:
 
     def pipeline(self, df: pd.DataFrame) -> pd.DataFrame:
         steps = [
+            self.sample_data,
             self.build_dt_features,
             self.build_haversine_distance,
             self.build_price_per_mile,
@@ -32,10 +33,13 @@ class BuildAnalysisFeatures:
             self.build_lagged_features,
             self.round_and_optimize_df
         ]
-        df = df[-int((len(df)*0.3)):]
         for step in steps:
             df = TaskExecutor.run_child_step(step, df)
         return df
+
+    def sample_data(self, df: pd.DataFrame) -> pd.DataFrame:
+        """The data will become very large once features are built. So we take a sample here."""
+        return df[-int((len(df)*0.1)):]
 
     def build_dt_features(self, df):
         df['hour'] = df['timestamp'].dt.hour.astype('int32')

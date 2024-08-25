@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Callable
 from typing import List
@@ -67,3 +68,17 @@ class TaskExecutor:
             kwargs: Optional[Union[dict, None]] = None) -> pd.DataFrame:
         """Pipeline runner for child pipelines scripts (lowest level scripts)"""
         return step(df, **args) if args is not None else step(df)
+
+    def _execute_steps(self, steps, stage=None):
+        if stage == "main":
+            for step, load_path, save_paths in steps:
+                logging.info(
+                    f"INITIATING {step.__self__.__class__.__name__} with:\n"
+                    f"    Input_path: {self.paths.get_path(load_path)}\n"
+                    f"    Output_paths: {self.paths.get_path(save_paths)}\n"
+                )
+                self.run_main_step(step, load_path, save_paths)
+                logging.info(f"{step.__self__.__class__.__name__} completed SUCCESSFULLY.\n")
+        if stage == "parent":
+            for step, load_path, save_paths in steps:
+                self.run_parent_step(step, load_path, save_paths)
